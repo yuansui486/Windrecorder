@@ -316,6 +316,172 @@ def render():
             f'🔒 {_t("set_pwd_text")}', value=config.webui_access_password_md5, help=_t("set_pwd_help"), type="password"
         )
 
+        st.divider()
+
+        # 音频录制设置组
+        st.markdown("### 🎤 Audio Recording / 音频录制设置")
+
+        # 启用音频录制
+        config_enable_audio_recording = st.checkbox(
+            "Enable Audio Recording / 启用音频录制",
+            value=config.enable_audio_recording,
+            help="Record system audio and microphone along with screen recording / 在录制屏幕的同时录制系统音频和麦克风",
+        )
+
+        if config_enable_audio_recording:
+            col1_audio, col2_audio = st.columns([1, 1])
+
+            with col1_audio:
+                # 录制系统音频
+                config_record_system_audio = st.checkbox(
+                    "Record System Audio / 录制系统音频",
+                    value=config.record_system_audio,
+                    help="Record audio from applications (e.g. browser, media player) / 录制来自应用程序的音频（如浏览器、媒体播放器）",
+                )
+
+                # 录制麦克风
+                config_record_mic_audio = st.checkbox(
+                    "Record Microphone / 录制麦克风",
+                    value=config.record_mic_audio,
+                    help="Record audio from microphone / 录制来自麦克风的音频",
+                )
+
+                # ASR 开关
+                config_enable_audio_asr = st.checkbox(
+                    "Enable ASR (Speech-to-Text) / 启用语音转文字",
+                    value=config.enable_audio_asr,
+                    help="Automatically transcribe audio to text during idle maintenance / 在闲时自动将音频转为文字",
+                )
+
+                # 音频保留天数
+                config_audio_store_day = st.number_input(
+                    "Audio Retention Days / 音频保留天数",
+                    min_value=1,
+                    max_value=365,
+                    value=config.audio_store_day,
+                    help="Automatically delete audio files after this many days (ASR text will be kept) / 超过此天数的音频文件将被自动删除（但 ASR 文本会保留）",
+                )
+
+            with col2_audio:
+                # 检测音频设备按钮
+                if st.button("🔍 Detect Audio Devices / 检测音频设备", help="Scan for available audio devices / 扫描可用的音频设备"):
+                    with st.spinner("Detecting audio devices... / 正在检测音频设备..."):
+                        devices = utils.get_audio_devices()
+                        st.session_state.audio_devices = devices
+
+                # 显示检测到的设备
+                if "audio_devices" in st.session_state:
+                    devices = st.session_state.audio_devices
+
+                    st.markdown("**Detected Devices / 检测到的设备:**")
+
+                    if devices['all_devices']:
+                        st.success(f"✅ Found {len(devices['all_devices'])} audio device(s) / 找到 {len(devices['all_devices'])} 个音频设备")
+                        for i, device in enumerate(devices['all_devices'], 1):
+                            st.text(f"  {i}. {device}")
+                    else:
+                        st.warning("⚠️ No audio devices found / 未找到音频设备")
+
+            # 设备选择
+            st.markdown("**Device Selection / 设备选择:**")
+            col1_dev, col2_dev = st.columns([1, 1])
+
+            with col1_dev:
+                # 系统音频设备
+                devices = st.session_state.get("audio_devices", {}).get('all_devices', [config.system_audio_device_name])
+                try:
+                    idx = devices.index(config.system_audio_device_name)
+                except ValueError:
+                    idx = 0
+
+                config_system_audio_device_name = st.selectbox(
+                    "System Audio / 系统音频",
+                    options=devices,
+                    index=idx,
+                    help="Select device for system sounds (Stereo Mix, Virtual Audio Cable) / 选择系统音频设备（立体声混音、虚拟音频线）",
+                )
+
+                if st.button("🎵 Test / 测试", key="test_sys"):
+                    success, msg, _ = utils.test_audio_device(config_system_audio_device_name, 2)
+                    (st.success if success else st.error)(f"{'✅' if success else '❌'} {msg}")
+
+            with col2_dev:
+                # 麦克风设备
+                devices = st.session_state.get("audio_devices", {}).get('all_devices', [config.mic_audio_device_name])
+                try:
+                    idx = devices.index(config.mic_audio_device_name)
+                except ValueError:
+                    idx = 0
+
+                config_mic_audio_device_name = st.selectbox(
+                    "Microphone / 麦克风",
+                    options=devices,
+                    index=idx,
+                    help="Select microphone device (headset, USB mic) / 选择麦克风设备（耳机、USB麦克风）",
+                )
+
+                if st.button("🎤 Test / 测试", key="test_mic"):
+                    success, msg, _ = utils.test_audio_device(config_mic_audio_device_name, 2)
+                    (st.success if success else st.error)(f"{'✅' if success else '❌'} {msg}")
+
+            # ASR 设置
+            if config_enable_audio_asr:
+                with st.expander("⚙️ Advanced ASR Settings / ASR 高级设置"):
+                    col1_asr, col2_asr = st.columns([1, 1])
+
+                    with col1_asr:
+                        config_asr_use_gpu = st.checkbox(
+                            "Use GPU for ASR / 使用 GPU 加速",
+                            value=config.asr_use_gpu,
+                            help="Enable GPU acceleration if you have NVIDIA GPU with CUDA / 如果有 NVIDIA GPU 和 CUDA，可启用 GPU 加速",
+                        )
+
+                        config_batch_size_asr_in_idle = st.number_input(
+                            "Batch Size / 批处理大小",
+                            min_value=1,
+                            max_value=20,
+                            value=config.batch_size_asr_in_idle,
+                            help="Number of audio files to process in each idle maintenance cycle / 每次闲时维护处理的音频文件数量",
+                        )
+
+                    with col2_asr:
+                        config_asr_min_text_length = st.number_input(
+                            "Min Text Length / 最小文本长度",
+                            min_value=1,
+                            max_value=50,
+                            value=config.asr_min_text_length,
+                            help="Texts shorter than this will be filtered as noise / 短于此长度的文本将被过滤为噪音",
+                        )
+
+                        config_asr_repetitive_threshold = st.slider(
+                            "Repetitive Threshold / 重复阈值",
+                            min_value=0.1,
+                            max_value=1.0,
+                            value=config.asr_repetitive_threshold,
+                            step=0.05,
+                            help="Lower values filter more repetitive text (e.g. song lyrics) / 较低的值会过滤更多重复文本（如歌词）",
+                        )
+
+                    # 音乐过滤关键词
+                    config_asr_music_filter_keywords = st.text_input(
+                        "Music Filter Keywords / 音乐过滤关键词",
+                        value=",".join(config.asr_music_filter_keywords) if config.asr_music_filter_keywords else "",
+                        help="Comma-separated keywords to filter out music (e.g. 'lalala,nanana') / 用逗号分隔的关键词，用于过滤音乐（如 'lalala,nanana'）",
+                    )
+        else:
+            # 禁用时使用现有配置
+            config_record_system_audio = config.record_system_audio
+            config_record_mic_audio = config.record_mic_audio
+            config_enable_audio_asr = config.enable_audio_asr
+            config_audio_store_day = config.audio_store_day
+            config_system_audio_device_name = config.system_audio_device_name
+            config_mic_audio_device_name = config.mic_audio_device_name
+            config_asr_use_gpu = config.asr_use_gpu
+            config_batch_size_asr_in_idle = config.batch_size_asr_in_idle
+            config_asr_min_text_length = config.asr_min_text_length
+            config_asr_repetitive_threshold = config.asr_repetitive_threshold
+            config_asr_music_filter_keywords = ""
+
         # 选择语言
         lang_selection = list(lang_map.values())
         lang_index = lang_selection.index(lang_map[config.lang])
@@ -374,6 +540,22 @@ def render():
                 "wordcloud_user_stop_words",
                 utils.string_to_list(config_wordcloud_user_stop_words),
             )
+
+            # 保存音频相关配置
+            config.set_and_save_config("enable_audio_recording", config_enable_audio_recording)
+            config.set_and_save_config("record_system_audio", config_record_system_audio)
+            config.set_and_save_config("record_mic_audio", config_record_mic_audio)
+            config.set_and_save_config("enable_audio_asr", config_enable_audio_asr)
+            config.set_and_save_config("audio_store_day", config_audio_store_day)
+            config.set_and_save_config("system_audio_device_name", config_system_audio_device_name)
+            config.set_and_save_config("mic_audio_device_name", config_mic_audio_device_name)
+            config.set_and_save_config("asr_use_gpu", config_asr_use_gpu)
+            config.set_and_save_config("batch_size_asr_in_idle", config_batch_size_asr_in_idle)
+            config.set_and_save_config("asr_min_text_length", config_asr_min_text_length)
+            config.set_and_save_config("asr_repetitive_threshold", config_asr_repetitive_threshold)
+            # 处理音乐过滤关键词
+            music_keywords = [k.strip() for k in config_asr_music_filter_keywords.split(",") if k.strip()]
+            config.set_and_save_config("asr_music_filter_keywords", music_keywords)
 
             # 如果有新密码输入，更改；如果留空，关闭功能
             if config_webui_access_password and config_webui_access_password != config.webui_access_password_md5:
