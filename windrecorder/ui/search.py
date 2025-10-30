@@ -328,7 +328,7 @@ def ui_ocr_text_search(data_type="month_range"):
 
     # Show info if audio recording and ASR are enabled
     if config.enable_audio_recording and config.enable_audio_asr:
-        st.info("🎤 Audio ASR is enabled. Search includes system audio and microphone transcriptions.", icon="💡")
+        st.info(_t("gs_text_asr_enabled_info"), icon="💡")
 
     do_global_keyword_search()
 

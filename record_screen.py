@@ -99,18 +99,21 @@ def idle_maintain_process_main():
         state.make_webui_footer_state_data_cache(ask_from="idle")
         # ASR 处理音频文件
         if config.enable_audio_recording and config.enable_audio_asr:
-            try:
-                from windrecorder.asr_manager import asr_manager
+            if config.asr_processing_paused:
+                logger.info("ASR processing is paused by user")
+            else:
+                try:
+                    from windrecorder.asr_manager import asr_manager
 
-                asr_lock = FileLock(config.asr_lock_path, str(getpid()), timeout_s=60 * 60)  # 1小时超时
-                with asr_lock:
-                    asr_manager.process_pending_audio_files(batch_size=config.batch_size_asr_in_idle)
-                    # 清理过期音频文件
-                    asr_manager.cleanup_old_audio_files()
-            except LockExistsException:
-                logger.warning("another ASR processing is running.")
-            except Exception as e:
-                logger.error(f"Error in ASR processing: {e}", exc_info=True)
+                    asr_lock = FileLock(config.asr_lock_path, str(getpid()), timeout_s=60 * 60)  # 1小时超时
+                    with asr_lock:
+                        asr_manager.process_pending_audio_files(batch_size=config.batch_size_asr_in_idle)
+                        # 清理过期音频文件
+                        asr_manager.cleanup_old_audio_files()
+                except LockExistsException:
+                    logger.warning("another ASR processing is running.")
+                except Exception as e:
+                    logger.error(f"Error in ASR processing: {e}", exc_info=True)
         # 生成 AI tags
         if config.enable_ai_extract_tag and config.enable_ai_extract_tag_in_idle:
             cache_day_tags_in_idle_routine()

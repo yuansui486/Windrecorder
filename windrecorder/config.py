@@ -132,6 +132,7 @@ class Config:
         asr_use_gpu,
         asr_language,
         asr_use_itn,
+        asr_ban_emo_unk,
         asr_batch_size_s,
         asr_merge_vad,
         asr_merge_length_s,
@@ -140,6 +141,7 @@ class Config:
         asr_repetitive_threshold,
         asr_auto_delete_audio_days,
         batch_size_asr_in_idle,
+        asr_processing_paused,
         audio_store_day,
         system_audio_device_name,
         mic_audio_device_name,
@@ -268,6 +270,7 @@ class Config:
         self.asr_use_gpu = asr_use_gpu
         self.asr_language = asr_language
         self.asr_use_itn = asr_use_itn
+        self.asr_ban_emo_unk = asr_ban_emo_unk
         self.asr_batch_size_s = asr_batch_size_s
         self.asr_merge_vad = asr_merge_vad
         self.asr_merge_length_s = asr_merge_length_s
@@ -276,6 +279,7 @@ class Config:
         self.asr_repetitive_threshold = asr_repetitive_threshold
         self.asr_auto_delete_audio_days = asr_auto_delete_audio_days
         self.batch_size_asr_in_idle = batch_size_asr_in_idle
+        self.asr_processing_paused = asr_processing_paused
         self.audio_store_day = audio_store_day
         self.system_audio_device_name = system_audio_device_name
         self.mic_audio_device_name = mic_audio_device_name

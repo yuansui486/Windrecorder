@@ -76,7 +76,7 @@ def render():
 
         # Audio Statistics (if audio recording is enabled)
         if config.enable_audio_recording:
-            st.markdown("### 🎤 Audio Recording Statistics")
+            st.markdown(_t("stat_audio_title"))
             get_show_audio_statistics(st.session_state.stat_select_month_datetime)
 
         stat_year_title = st.session_state.stat_select_month_datetime.year
@@ -273,9 +273,9 @@ def get_show_audio_statistics(dt: datetime.datetime):
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric("Total Files", stats['total'])
-            st.metric("🔊 System", stats['system'])
-            st.metric("🎤 Mic", stats['mic'])
+            st.metric(_t("stat_audio_metric_total"), stats['total'])
+            st.metric(_t("stat_audio_metric_system"), stats['system'])
+            st.metric(_t("stat_audio_metric_mic"), stats['mic'])
 
         with col2:
             size = stats['size']
@@ -285,17 +285,17 @@ def get_show_audio_statistics(dt: datetime.datetime):
                 size_str = f"{size/(1024**2):.1f} MB"
             else:
                 size_str = f"{size/(1024**3):.2f} GB"
-            st.metric("Size", size_str)
+            st.metric(_t("stat_audio_metric_size"), size_str)
 
             if config.enable_audio_asr:
-                st.metric("ASR Done", stats['asr_all'])
-                st.metric("ASR OK", stats['asr_ok'])
+                st.metric(_t("stat_audio_metric_asr_done"), stats['asr_all'])
+                st.metric(_t("stat_audio_metric_asr_ok"), stats['asr_ok'])
 
         with col3:
             if stats['total'] > 0:
                 mins = stats['total'] * config.record_seconds / 60
                 time_str = f"{mins:.0f} min" if mins < 60 else f"{mins/60:.1f}h"
-                st.metric("Duration", time_str)
+                st.metric(_t("stat_audio_metric_duration"), time_str)
 
                 avg_mb = stats['size'] / (1024**2) / stats['total']
                 st.metric("Avg Size", f"{avg_mb:.2f} MB")
